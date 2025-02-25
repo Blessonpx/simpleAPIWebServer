@@ -96,31 +96,34 @@ public class HttpDecoder {
 		}
 	}
 	
-	private static HttpRequest addRequestHeaders(final List<String> message, final Builder builder) {
+	private static HttpRequest addRequestHeaders(final List<String> message, final HttpRequest.Builder builder) {
 		final Map<String,List<String>> requestHeaders = new HashMap<>();
 		
 		if(message.size()>1) {
 			for(int i=1;i<message.size();i++) {
 				String header = message.get(i);
-				int colonIndex = message.indexOf(":");
+				int colonIndex = header.indexOf(":");
 				if(!(colonIndex>0 && header.length()>colonIndex+1)) {
 					break;
 				}
 				
-				String headerName = header.substring(0,colonIndex);
-				String headerValue = header.substring(colonIndex+1);
+				String headerName = header.substring(0,colonIndex).trim();
+				String headerValue = header.substring(colonIndex+1).trim();
 				
-				requestHeaders.compute(headerName, (key,values)->{
-					if(values != null) {
-						values.add(headerValue);
-					}else {
-						values = new ArrayList<>();
-					}
-					return values;
-				});
+				requestHeaders.computeIfAbsent(headerName, k -> new ArrayList<>()).add(headerValue);
 				
-			}
+//				requestHeaders.compute(headerName, (key,values)->{
+//					if(values != null) {
+//						values.add(headerValue);
+//					}else {
+//						values = new ArrayList<>();
+//					}
+//					return values;
+//				});
+			}	
 		}
+		requestHeaders.forEach((key, values) -> values.forEach(value -> builder.header(key, value)));
+		return builder.build();
 	}
 	
 	
